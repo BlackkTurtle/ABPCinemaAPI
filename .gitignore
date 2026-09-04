@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/ABPCinemaAPI.Api/PCStore.db
+/ABPCinemaAPI.Api/PCStore.db-shm
+/ABPCinemaAPI.Api/PCStore.db-wal
