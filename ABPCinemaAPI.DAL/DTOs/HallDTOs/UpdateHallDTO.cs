@@ -1,16 +1,14 @@
-﻿using ABPCinemaAPI.DAL.DTOs.ServiceDTOs;
-using ABPCinemaAPI.DAL.Entities;
+using ABPCinemaAPI.DAL.DTOs.ServiceDTOs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ABPCinemaAPI.DAL.DTOs.HallDTOs
 {
-    public class CreateHallDTO
+    public class UpdateHallDTO
     {
+        [Required]
+        public Guid Id { get; set; }
         [Required]
         [MaxLength(50)]
         public string Name { get; set; } = null!;
@@ -20,6 +18,6 @@ namespace ABPCinemaAPI.DAL.DTOs.HallDTOs
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Price must be a positive number greater than 0.")]
         public int Price { get; set; }
-        public List<CreateServiceDTO> Services { get; set; } = new List<CreateServiceDTO>();
+        public List<UpdateServiceDTO> Services { get; set; } = new List<UpdateServiceDTO>();
     }
 }

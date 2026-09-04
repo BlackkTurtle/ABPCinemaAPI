@@ -11,6 +11,8 @@ namespace ABPCinemaAPI.BLL.Mapping.ServiceProfiles
             CreateMap<CreateServiceDTO, Service>();
 
             CreateMap<Service, GetServiceDTO>();
+
+            CreateMap<UpdateServiceDTO, Service>();
         }
     }
 }

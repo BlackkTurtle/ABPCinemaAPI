@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -98,7 +99,7 @@ namespace ABPCinemaAPI.DAL.Repositories
             return await _dbSet.ToListAsync();
         }
 
-        public async Task<T> GetFirstOrDefaultAsync(int id)
+        public async Task<T> GetFirstOrDefaultAsync(Guid id)
         {
             return await _dbSet.FindAsync(id);
         }

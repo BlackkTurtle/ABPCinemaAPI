@@ -42,6 +42,6 @@ namespace ABPCinemaAPI.DAL.Repositories.Contracts
 
         Task<IEnumerable<T>> GetAllAsync();
 
-        Task<T> GetFirstOrDefaultAsync(int id);
+        Task<T> GetFirstOrDefaultAsync(Guid id);
     }
 }
