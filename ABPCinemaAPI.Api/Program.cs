@@ -1,6 +1,7 @@
 using ABPCinemaAPI.Api.Middleware;
 using ABPCinemaAPI.BLL.Services;
 using ABPCinemaAPI.BLL.Services.Contracts;
+using ABPCinemaAPI.DAL.Entities;
 using ABPCinemaAPI.DAL.Persistence;
 using ABPCinemaAPI.DAL.Repositories;
 using ABPCinemaAPI.DAL.Repositories.Contracts;
@@ -20,9 +21,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddSingleton<Serilog.ILogger>(sp => Log.Logger);
 
-// MediatR
+// MediatR and Mapper
 var currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(currentAssemblies));
+builder.Services.AddAutoMapper(cfg => cfg.AddMaps(currentAssemblies));
 
 //AddingServices
 builder.Services.AddScoped<ILoggerService, LoggerService>();
