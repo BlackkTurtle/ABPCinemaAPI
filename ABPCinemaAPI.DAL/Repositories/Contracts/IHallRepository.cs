@@ -9,5 +9,6 @@ namespace ABPCinemaAPI.DAL.Repositories.Contracts
 {
     public interface IHallRepository:IGenericRepository<Hall>
     {
+        Task<List<Hall>> GetHallsWithAppointmentsAndServicesAsync(DateTime startDate, DateTime endDateExclusive);
     }
 }

@@ -2,6 +2,7 @@
 using ABPCinemaAPI.BLL.MediatR.HallHandlers.CreateHall;
 using ABPCinemaAPI.BLL.MediatR.HallHandlers.DeleteHall;
 using ABPCinemaAPI.BLL.MediatR.HallHandlers.GetAvailableHalls;
+using ABPCinemaAPI.BLL.MediatR.HallHandlers.GetHallsRevenueReport;
 using ABPCinemaAPI.BLL.MediatR.HallHandlers.UpdateHall;
 using ABPCinemaAPI.DAL.DAOs.HallDAOs;
 using ABPCinemaAPI.DAL.DTOs.HallDTOs;
@@ -34,6 +35,12 @@ namespace ABPCinemaAPI.Api.Controllers
         public async Task<IActionResult> GetAvailableHalls([FromQuery] GetAvailableHallsDAO getAvailableHallsDAO)
         {
             return HandleResult(await Mediator.Send(new GetAvailbaleHallsQuery(getAvailableHallsDAO)));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetHallsRevenueReport([FromQuery] GetHallsRevenueReportDAO getHallsRevenueReportDAO)
+        {
+            return HandleResult(await Mediator.Send(new GetHallsRevenueReportQuery(getHallsRevenueReportDAO)));
         }
     }
 }
