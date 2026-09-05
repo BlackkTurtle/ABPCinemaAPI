@@ -1,0 +1,497 @@
+                    ABP CINEMA API - TECHNICAL DOCUMENTATION
+                         Conference Hall Booking System
+
+PROJECT OVERVIEW
+
+The ABP Cinema API is a .NET 9 ASP.NET Core Web API solution designed to manage 
+conference hall bookings and rental cost calculations. The system enables clients 
+to search for available conference halls, make bookings, and calculate rental costs 
+based on time slots and selected services.
+
+Repository: https://github.com/BlackkTurtle/ABPCinemaAPI
+
+BUSINESS REQUIREMENTS
+
+1. CONFERENCE HALL MANAGEMENT
+   - Add new conference halls with capacity and hourly rental rates
+   - Update hall information (capacity, rental rates, available services)
+   - Delete conference halls from the system
+   - Support multiple services per hall (projectors, Wi-Fi, sound systems, etc.)
+
+2. BOOKING SYSTEM
+   - Search for available halls based on date, time, and capacity requirements
+   - Create bookings with specified duration and selected services
+   - Automatic calculation of total rental cost based on time slots and services
+   - Prevent overlapping bookings for the same hall
+
+3. PRICING STRATEGY
+   - Dynamic pricing based on time of day:
+     * Standard hours (09:00 - 18:00): Base rate
+     * Evening hours (18:00 - 23:00): 20% discount
+     * Morning hours (06:00 - 09:00): 10% discount
+     * Peak hours (12:00 - 14:00): 15% surcharge
+   - Services add additional costs to base rental rate
+   - Total cost = (Base Rate ? Time Duration ? Time Multiplier) + Services Cost
+
+4. REPORTING AND ANALYTICS
+   - Generate revenue reports for conference halls
+   - Track booking history and hall utilization
+   - Analyze service popularity and profitability
+
+5. INITIAL DATA
+   Conference Halls:
+   - Hall A: Capacity 50 people, Base rate 2000 UAH/hour
+   - Hall B: Capacity 100 people, Base rate 3500 UAH/hour
+   - Hall C: Capacity 30 people, Base rate 1500 UAH/hour
+
+   Services:
+   - Projector: 500 UAH
+   - Wi-Fi: 300 UAH
+   - Sound System: 700 UAH
+
+================================================================================
+TECHNICAL SOLUTION ARCHITECTURE
+================================================================================
+
+1. ARCHITECTURE PATTERN: Layered Architecture with CQRS
+
+   The solution implements a three-tier layered architecture:
+
+   API Layer (ABPCinemaAPI.Api)
+   - Controllers
+      - HallController: Manages hall operations
+      - AppointmentController: Handles booking operations
+      - BaseApiController: Base class for unified response handling
+   - Middleware
+      - GlobalExceptionHandlerMiddleware: Centralized error handling
+   - Configuration (Program.cs)
+
+   Business Logic Layer (ABPCinemaAPI.BLL)
+   - MediatR Handlers (CQRS Pattern)
+      - Commands: CreateHall, UpdateHall, DeleteHall, CreateAppointment
+      - Queries: GetAvailableHalls, GetHallsRevenueReport
+   - Services
+      - LoggerService: Logging infrastructure
+   - Specifications
+      - HallSpecifications: Query specifications for complex filtering
+   - Mapping
+      - AutoMapper profiles for DTO conversions
+   - Exception Handling
+       - Custom exception classes for specific error scenarios
+
+   Data Access Layer (ABPCinemaAPI.DAL)
+   - Entities
+      - Hall: Conference hall entity with services relationship
+      - Appointment: Booking entity linked to halls
+      - Service: Available services entity
+   - Repositories
+      - GenericRepository: Base repository for CRUD operations
+      - HallRepository: Hall-specific queries
+      - AppointmentRepository: Appointment-specific queries
+      - UnitOfWork: Transaction management
+   - Persistence
+      - AppDbContext: Entity Framework Core context
+      - Seeding: Initial data population
+      - Configurations: Entity configurations
+   - DTOs: Data Transfer Objects for API contracts
+
+2. DESIGN PATTERNS IMPLEMENTED
+
+   a) CQRS (Command Query Responsibility Segregation)
+      - Commands: CreateHall, UpdateHall, DeleteHall, CreateAppointment
+      - Queries: GetAvailableHalls, GetHallsRevenueReport
+      - Benefit: Separation of write and read operations, improved scalability
+      - Implementation: MediatR library for command/query dispatching
+
+   b) Repository Pattern
+      - Generic repository for common CRUD operations
+      - Specific repositories for complex domain queries
+      - Unit of Work pattern for transaction management
+      - Benefit: Data access abstraction, easier testing
+
+   c) Specification Pattern
+      - Complex query specifications (HallWithServicesSpec)
+      - Encapsulates filtering, sorting, and includes logic
+      - Benefit: Cleaner repository methods, reusable query logic
+
+   d) DTO (Data Transfer Object) Pattern
+      - Separate DTOs for input (Create/Update) and output (Get)
+      - Protection of internal entity structure
+      - API contract definition
+
+   e) Dependency Injection
+      - All services registered in IoC container
+      - Constructor injection for loose coupling
+      - Benefit: Better testability and maintainability
+
+3. TECHNOLOGY STACK
+
+   Core Framework:
+   - .NET 9 (Latest LTS version)
+   - ASP.NET Core (Web API framework)
+   - Entity Framework Core (ORM for database access)
+   - SQLite (Lightweight database - suitable for MVP)
+
+   Libraries and Tools:
+   - MediatR: CQRS pattern implementation
+   - AutoMapper: Object mapping between DTOs and entities
+   - Serilog: Structured logging
+   - Swagger/OpenAPI: API documentation and testing
+   - CORS: Cross-Origin Resource Sharing support
+   - FluentValidation: Data validation (extensible)
+
+4. DATA MODELS
+
+   Hall Entity:
+    Hall                                
+    + Id: Guid (PK)                    
+    + Name: string (e.g., "Hall A")    
+    + Capacity: int (e.g., 50)         
+    + BaseRatePerHour: decimal (2000)  
+    + Services: ICollection<Service>   
+    + Appointments: ICollection<App>   
+   
+
+   Appointment Entity:
+    Appointment                         
+   
+    + Id: Guid (PK)                    
+    + HallId: Guid (FK)                
+    + StartTime: DateTime              
+    + EndTime: DateTime                
+    + TotalCost: decimal               
+    + SelectedServices: string[]       
+    + Hall: Hall (Navigation)          
+   
+
+   Service Entity:
+    Service                             
+   
+    + Id: Guid (PK)                    
+    + Name: string                     
+    + Cost: decimal                    
+    + Halls: ICollection<Hall>         
+   
+
+API ENDPOINTS SPECIFICATION
+
+BASE URL: https://localhost:5001/api
+
+1. HALL MANAGEMENT ENDPOINTS
+
+   CREATE HALL
+   Endpoint: POST /api/Hall/CreateHall
+   Request Body:
+   {
+     "name": "Hall 1",
+     "capacity": 50,
+     "baseRatePerHour": 2000,
+     "serviceIds": ["service-id-1", "service-id-2"]
+   }
+   Response: 200 OK
+   {
+     "data": {
+       "id": "hall-id",
+       "name": "     ",
+       "capacity": 50,
+       "baseRatePerHour": 2000,
+       "services": [...]
+     },
+     "isSuccess": true,
+     "message": "Hall created successfully"
+   }
+
+   UPDATE HALL
+   Endpoint: PUT /api/Hall/UpdateHall
+   Request Body:
+   {
+     "id": "hall-id",
+     "name": "      - Updated",
+     "capacity": 55,
+     "baseRatePerHour": 2500,
+     "serviceIds": [...]
+   }
+   Response: 200 OK (same as create)
+
+   DELETE HALL
+   Endpoint: DELETE /api/Hall/DeleteHall/{id}
+   Path Parameters:
+   - id: Guid (Hall ID)
+   Response: 200 OK
+   {
+     "data": null,
+     "isSuccess": true,
+     "message": "Hall deleted successfully"
+   }
+
+2. AVAILABILITY SEARCH ENDPOINT
+
+   GET AVAILABLE HALLS
+   Endpoint: GET /api/Hall/GetAvailableHalls?startTime=2024-09-01T10:00:00&endTime=2024-09-01T14:00:00&capacity=50
+   Query Parameters:
+   - startTime: DateTime (booking start time)
+   - endTime: DateTime (booking end time)
+   - capacity: int (minimum required capacity)
+   Response: 200 OK
+   {
+     "data": [
+       {
+         "id": "hall-id",
+         "name": "     ",
+         "capacity": 50,
+         "baseRatePerHour": 2000,
+         "services": [...]
+       }
+     ],
+     "isSuccess": true,
+     "message": "Available halls retrieved successfully"
+   }
+
+3. BOOKING ENDPOINTS
+
+   CREATE APPOINTMENT (BOOKING)
+   Endpoint: POST /api/Appointment/CreateAppointment
+   Request Body:
+   {
+     "hallId": "hall-id",
+     "startTime": "2024-09-01T10:00:00",
+     "endTime": "2024-09-01T14:00:00",
+     "selectedServiceIds": ["service-id-1", "service-id-2"]
+   }
+   Response: 200 OK
+   {
+     "data": {
+       "id": "appointment-id",
+       "hallId": "hall-id",
+       "hallName": "     ",
+       "startTime": "2024-09-01T10:00:00",
+       "endTime": "2024-09-01T14:00:00",
+       "durationHours": 4,
+       "totalCost": 8500,
+       "selectedServices": ["Projector", "Wi-Fi"]
+     },
+     "isSuccess": true,
+     "message": "Appointment created successfully"
+   }
+
+4. REPORTING ENDPOINTS
+
+   GET HALLS REVENUE REPORT
+   Endpoint: GET /api/Hall/GetHallsRevenueReportreport?startDate=2024-09-01&endDate=2024-09-30
+   Query Parameters:
+   - startDate: DateTime (report start date)
+   - endDate: DateTime (report end date)
+   Response: 200 OK
+   {
+     "data": [
+       {
+         "hallId": "hall-id",
+         "hallName": "     ",
+         "capacity": 50,
+         "totalRevenue": 42500,
+         "appointmentCount": 5,
+         "averageBookingValue": 8500,
+         "servicesRevenue": [
+           {
+             "serviceName": "Projector",
+             "revenue": 2500
+           }
+         ]
+       }
+     ],
+     "isSuccess": true,
+     "message": "Revenue report generated successfully"
+   }
+
+COST CALCULATION LOGIC
+
+Algorithm:
+1. Calculate duration in hours: (EndTime - StartTime).TotalHours
+
+2. Determine time multiplier based on hour ranges:
+   if (start_hour >= 06:00 AND start_hour < 09:00)
+       multiplier = 0.90  // 10% discount
+   else if (start_hour >= 09:00 AND start_hour < 12:00)
+       multiplier = 1.00  // Standard rate
+   else if (start_hour >= 12:00 AND start_hour < 14:00)
+       multiplier = 1.15  // 15% surcharge
+   else if (start_hour >= 14:00 AND start_hour < 18:00)
+       multiplier = 1.00  // Standard rate
+   else if (start_hour >= 18:00 AND start_hour < 23:00)
+       multiplier = 0.80  // 20% discount
+   else
+       multiplier = 1.00  // Standard rate (outside operating hours)
+
+3. Calculate base rental cost:
+   base_cost = base_rate ? duration ? multiplier
+
+4. Calculate services cost:
+   services_cost = sum(all selected services costs)
+
+5. Calculate total cost:
+   total_cost = base_cost + services_cost
+
+Example Calculation:
+- Hall: "Hall 1", Base Rate: 2000 /hour
+- Duration: 4 hours (10:00 - 14:00)
+- Time slots: 10:00-12:00 (2 hours @ 1.00) + 12:00-14:00 (2 hours @ 1.15)
+- Base cost: (2000 ? 2 ? 1.00) + (2000 ? 2 ? 1.15) = 4000 + 4600 = 8600 
+- Services: Projector (500 ) + Wi-Fi (300 ) = 800 
+- Total Cost: 8600 + 800 = 9400 
+
+================================================================================
+EXCEPTION HANDLING AND ERROR RESPONSES
+================================================================================
+
+Error Response Format:
+{
+  "data": null,
+  "isSuccess": false,
+  "message": "Error description",
+  "statusCode": 400
+}
+
+Global Exception Handler Middleware:
+- Catches all unhandled exceptions
+- Logs errors with Serilog
+- Returns standardized error response
+- Prevents sensitive information leakage
+
+================================================================================
+SECURITY CONSIDERATIONS
+================================================================================
+
+1. INPUT VALIDATION
+   - All DTOs use data annotations and FluentValidation
+   - Validates time ranges, capacity numbers, and cost values
+   - Custom validators for operating hours and time constraints
+
+2. CORS CONFIGURATION
+   - Restricted to specified origins (localhost:4200, 3000, 8080)
+   - Prevents unauthorized cross-origin requests
+   - Configurable for production environments
+
+3. HTTPS REDIRECTION
+   - All HTTP requests redirected to HTTPS
+   - Enforced in production environment
+
+4. DATA ACCESS SECURITY
+   - Repository pattern abstracts direct database access
+   - Entity Framework Core provides SQL injection protection
+   - Specifications prevent unauthorized data queries
+
+5. LOGGING AND MONITORING
+   - Serilog for structured logging
+   - Sensitive information filtering
+   - Audit trail for critical operations
+
+6. FUTURE ENHANCEMENTS
+   - JWT authentication and authorization
+   - Role-based access control (RBAC)
+   - API rate limiting
+   - Request encryption for sensitive data
+   - Audit logging for compliance
+
+SCALABILITY AND MAINTAINABILITY
+
+1. CLEAN CODE PRINCIPLES (Robert C. Martin)
+
+   a) Meaningful Names
+      - Classes: HallController, CreateHallHandler, HallRepository
+      - Methods: GetAvailableHalls, CalculateTotalCost
+      - Variables: startTime, totalCost, selectedServices
+
+   b) Single Responsibility Principle (SRP)
+      - Each class has one reason to change
+      - HallController: API routing
+      - CreateHallHandler: Hall creation logic
+      - HallRepository: Data access
+      - LoggerService: Logging
+
+   c) DRY Principle (Don't Repeat Yourself)
+      - BaseApiController: Common response handling
+      - GenericRepository: Shared CRUD operations
+      - AutoMapper: Centralized DTOs conversion
+      - Specifications: Reusable query logic
+
+   d) Error Handling
+      - Specific exception types for different scenarios
+      - Global exception middleware for consistent handling
+      - Meaningful error messages for debugging
+
+2. EXTENSIBILITY POINTS
+
+   a) Add New Services
+      - Create new entity in DAL
+      - Add repository contract and implementation
+      - Extend HallService relationship
+      - Add DTOs and AutoMapper profiles
+      - Create MediatR handlers for business logic
+
+   b) Add New Features
+      - Implement as new MediatR handlers
+      - Follow existing patterns and conventions
+      - Add corresponding repository methods
+      - Create API endpoints in controllers
+
+   c) Database Changes
+      - Use Entity Framework Core migrations
+      - Versioned migration files maintain history
+      - Seeding in CinemaSeeding for initial data
+
+   d) Reporting Features
+      - GetHallsRevenueReport as template
+      - DAO objects for complex queries
+      - Easily add new report types
+
+3. TESTING STRATEGY
+
+   a) Unit Tests
+      - Test individual services and handlers
+      - Mock repositories using interfaces
+      - Test cost calculation logic thoroughly
+
+   b) Integration Tests
+      - Test full request-response cycle
+      - Use in-memory database
+      - Verify database constraints
+
+   c) API Tests
+      - Test actual HTTP endpoints
+      - Verify error responses
+      - Load testing for performance
+
+4. PERFORMANCE CONSIDERATIONS
+
+   a) Database Optimization
+      - Indexes on frequently queried columns (HallId, StartTime)
+      - Eager loading with Include() for related entities
+      - Specification pattern for optimized queries
+
+   b) Caching Strategy
+      - Cache hall master data (rarely changes)
+      - Cache service list
+      - Invalidate on updates
+
+   c) Query Optimization
+      - Use specifications to reduce data transfer
+      - Pagination for large result sets
+      - Async/await for non-blocking I/O
+
+SWAGGER/OPENAPI DOCUMENTATION
+
+The API is fully documented with Swagger/OpenAPI:
+
+Access Swagger UI:
+- URL: https://localhost:5001/swagger
+- Provides interactive API exploration
+- Test endpoints directly from browser
+- View request/response schemas
+- Automatic schema generation from DTOs
+
+Swagger Configuration:
+- Included in Program.cs: builder.Services.AddSwaggerGen()
+- Middleware enabled in development: app.UseSwagger()
+- UI enabled: app.UseSwaggerUI()
+- Automatic endpoint discovery from controllers
+- XML comments (future enhancement) for descriptions
