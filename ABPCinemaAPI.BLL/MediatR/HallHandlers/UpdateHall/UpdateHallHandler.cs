@@ -44,7 +44,7 @@ namespace ABPCinemaAPI.BLL.MediatR.HallHandlers.UpdateHall
             _mapper.Map(request.UpdateHallDto, hall);
 
             // Handle services synchronization
-            await SynchronizeServices(hall, request.UpdateHallDto.Services);
+            await SynchronizeServices(hall, request.UpdateHallDto.Services, cancellationToken);
 
             _unitOfWork.HallRepository.Update(hall);
 
@@ -60,7 +60,7 @@ namespace ABPCinemaAPI.BLL.MediatR.HallHandlers.UpdateHall
             return Result.Ok(_mapper.Map<GetHallDTO>(hall));
         }
 
-        private async Task SynchronizeServices(Hall hall, List<UpdateServiceDTO> updateServiceDtos)
+        private async Task SynchronizeServices(Hall hall, List<UpdateServiceDTO> updateServiceDtos, CancellationToken cancellationToken)
         {
             var existingServices = hall.Services ?? new List<Service>();
             var updateServiceIds = updateServiceDtos

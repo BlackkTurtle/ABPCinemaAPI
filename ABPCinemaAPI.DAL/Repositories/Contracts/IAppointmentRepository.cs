@@ -9,5 +9,6 @@ namespace ABPCinemaAPI.DAL.Repositories.Contracts
 {
     public interface IAppointmentRepository:IGenericRepository<Appointment>
     {
+        Task<bool> IsValidAppointment(Guid hallId, DateTime startDate, DateTime endDate);
     }
 }

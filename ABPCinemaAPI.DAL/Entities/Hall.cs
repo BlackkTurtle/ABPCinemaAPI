@@ -10,7 +10,7 @@ namespace ABPCinemaAPI.DAL.Entities
         public string Name { get; set; } = null!;
         public int Capacity { get; set; }
         public int Price { get; set; }
-        public List<Service> Services { get; set; }
-        public List<Appointment> Appointments { get; set; }
+        public List<Service> Services { get; set; } = new List<Service>();
+        public List<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

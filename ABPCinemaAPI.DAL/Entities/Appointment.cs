@@ -11,7 +11,7 @@ namespace ABPCinemaAPI.DAL.Entities
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public int TotalPrice { get; set; }
-        public Hall? Hall { get; set; }
-        public List<Service> Services { get; set; }
+        public Hall? Hall { get; set; } = null!;
+        public List<Service> Services { get; set; } = new List<Service>();
     }
 }
