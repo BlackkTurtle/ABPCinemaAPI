@@ -59,11 +59,13 @@ namespace ABPCinemaAPI.BLL.MediatR.AppointmentHandlers.CreateAppointment
                 Services = hall.Services.Where(x => request.CreateAppointmentDTO.Services.Contains(x.Id)).ToList(),
             };
 
+            await _unitOfWork.AppointmentRepository.CreateAsync(appointment);
+
             var isSuccessResult = await _unitOfWork.SaveChangesAsync() > 0;
 
             if (!isSuccessResult)
             {
-                const string errorMsg = "Cannot save changes in the database after entity update!";
+                const string errorMsg = "Cannot save changes in the database after entity Create!";
                 _logger.LogError(request, errorMsg);
                 throw new InternalServerErrorException();
             }

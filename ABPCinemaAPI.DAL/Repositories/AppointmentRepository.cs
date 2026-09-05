@@ -23,7 +23,7 @@ namespace ABPCinemaAPI.DAL.Repositories
         {
             return !await appDbContext.Appointments
                 .Where(a => a.HallId == hallId)
-                .AnyAsync(a => (a.StartTime < endDate && a.StartTime > startDate) || (a.EndTime < endDate && a.EndTime > startDate));
+                .AnyAsync(a => a.StartTime < endDate && a.EndTime > startDate);
         }
     }
 }
